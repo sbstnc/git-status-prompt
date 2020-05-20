@@ -97,7 +97,7 @@ if(LIBGIT2_INCLUDE_DIR)
 endif()
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(LibGit2
+find_package_handle_standard_args(Libgit2
     FOUND_VAR
         LIBGIT2_FOUND
     REQUIRED_VARS
