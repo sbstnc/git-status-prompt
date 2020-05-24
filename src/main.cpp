@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdlib>
+#include <cxxopts.hpp>
 #include <filesystem>
 #include <functional>
 #include <git2.h>
@@ -41,8 +42,27 @@ std::filesystem::path homePath() {
   ;
 }
 
-int main(int argc, const char *argv[]) {
-  rang::setControlMode(rang::control::Force);
+int main(int argc, char *argv[]) {
+  // clang-format off
+  cxxopts::Options options("git_status_prompt", "A fast git status prompt");
+  options.add_options()
+    ("c,color", "Force color on",cxxopts::value<bool>()->default_value("false")
+                                                       ->implicit_value("true"))
+    ("s,status", "Shell status",cxxopts::value<int>()->default_value("0"))
+    ("h,help", "Print usage")
+    ;
+  // clang-format on
+
+  auto result = options.parse(argc, argv);
+
+  if (result.count("help")) {
+    std::cout << options.help() << std::endl;
+    exit(0);
+  }
+
+  if (result["color"].as<bool>())
+    rang::setControlMode(rang::control::Force);
+
   const auto home = homePath();
   const auto curr = std::filesystem::current_path();
 
@@ -107,7 +127,7 @@ int main(int argc, const char *argv[]) {
   if (repoHead.has_value())
     std::cout << STATUS_SEPARATOR << repoHead->oid();
 
-  if (argc > 1 && std::string(argv[1]) != "0")
+  if (result["status"].as<int>() != 0)
     std::cout << STATUS_SEPARATOR << rang::fg::red << BAD_EXIT_SYMBOL
               << rang::fg::reset;
 

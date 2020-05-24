@@ -1,5 +1,5 @@
 find_package(Libgit2 REQUIRED)
-find_package(fmt CONFIG REQUIRED)
+find_package(cxxopts CONFIG REQUIRED)
 find_path(RANG_INCLUDE_DIR rang.hpp)
 include_directories(${RANG_INCLUDE_DIR})
 file(GLOB SOURCES "*.cpp")
@@ -8,7 +8,7 @@ add_executable(git_status_prompt main.cpp GitReference.cpp GitRepository.cpp Git
 set_target_properties(git_status_prompt PROPERTIES CXX_STANDARD 17 CXX_EXTENSIONS OFF)
 target_include_directories(git_status_prompt PRIVATE ${PROJECT_BINARY_DIR})
 target_link_libraries(git_status_prompt PRIVATE LibGit2::LibGit2)
-target_link_libraries(git_status_prompt PRIVATE fmt::fmt)
+target_link_libraries(git_status_prompt PRIVATE cxxopts::cxxopts)
 
 IF(APPLE)
   find_library(COREFOUNDATION CoreFoundation)
