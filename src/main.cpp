@@ -82,7 +82,6 @@ int main(int argc, char *argv[]) {
   }
 
   std::cout << rang::fg::cyan << path_str << rang::fg::reset;
-
   auto repo = GitRepository(".");
   auto repoStatus = repo.status();
   auto repoHead = repo.head();

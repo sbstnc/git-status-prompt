@@ -1,9 +1,11 @@
 #include "GitRepository.h"
 #include "GitReference.h"
 #include <cstddef>
-#include <git2/graph.h>
-#include <git2/refs.h>
+#include <git2.h>
+#include <memory>
 #include <optional>
+#include <string>
+#include <type_traits>
 #include <utility>
 
 GitRepositoryStatus GitRepository::status() const & {
@@ -15,15 +17,24 @@ GitRepositoryStatus GitRepository::status() const & {
                GIT_STATUS_OPT_RENAMES_FROM_REWRITES;
 
   if (repo)
-    git_status_foreach_ext(repo, &opts, git_repository_status_cb, &d);
+    git_status_foreach_ext(repo.get(), &opts, git_repository_status_cb, &d);
   return d;
 }
 
 std::optional<GitReference> GitRepository::head() const & {
+  if (!repo)
+    return std::nullopt;
+
   GitReference gitRef;
-  if (repo && git_repository_head(&gitRef.ref, repo) == 0)
-    return gitRef;
-  return std::nullopt;
+  git_reference *headRef = nullptr;
+
+  int err = git_repository_head(&headRef, repo.get());
+  gitRef.ref =
+      std::move(std::unique_ptr<git_reference, decltype(&git_reference_free)>(
+          headRef, git_reference_free));
+  if (err)
+    return std::nullopt;
+  return gitRef;
 }
 
 std::pair<std::size_t, std::size_t> GitRepository::aheadBehind() const & {
@@ -31,73 +42,43 @@ std::pair<std::size_t, std::size_t> GitRepository::aheadBehind() const & {
   if (local) {
     const std::optional<GitReference> upstream = local->upstream();
     if (upstream) {
-      auto localOid = git_reference_target(local->ref);
-      auto upstreamOid = git_reference_target(upstream->ref);
+      auto localOid = git_reference_target(local->ref.get());
+      auto upstreamOid = git_reference_target(upstream->ref.get());
       size_t ahead = 0, behind = 0;
-      git_graph_ahead_behind(&ahead, &behind, repo, localOid, upstreamOid);
+      git_graph_ahead_behind(&ahead, &behind, repo.get(), localOid,
+                             upstreamOid);
       return std::make_pair(ahead, behind);
     }
   }
   return std::make_pair(0, 0);
 }
 
-GitRepository::GitRepository() : root(nullptr), repo(nullptr) {
-  git_libgit2_init();
-}
-
 GitRepository::GitRepository(const std::string &path)
-    : root(new git_buf()), repo(nullptr) {
-  git_libgit2_init();
-  if (git_repository_discover(root, path.c_str(), false, "/") == 0) {
-    git_repository_open(&repo, root->ptr);
+    : root(new git_buf(), &GitRepository::freeBufResources),
+      repo(nullptr, [](git_repository *) {}) {
+  int err = 0;
+
+  auto *buf = new git_buf();
+  err = git_repository_discover(buf, path.c_str(), false, "/");
+  auto rootPtr = std::unique_ptr<git_buf, decltype(&git_buf_free)>(
+      std::move(buf), &GitRepository::freeBufResources);
+  if (err && err != GIT_ENOTFOUND)
+    throw std::runtime_error("Failed discovering git repository");
+  root = std::move(rootPtr);
+
+  if (err != GIT_ENOTFOUND) {
+    git_repository *repoCptr = nullptr;
+    err = git_repository_open(&repoCptr, root->ptr);
+    auto repoPtr =
+        std::unique_ptr<git_repository, decltype(&git_repository_free)>(
+            std::move(repoCptr), git_repository_free);
+    if (err)
+      throw std::runtime_error("Failed opening repository");
+    repo = std::move(repoPtr);
   }
 }
 
-GitRepository::GitRepository(const GitRepository &orig)
-    : root(new git_buf()), repo(nullptr) {
-  if (git_buf_set(root, orig.root->ptr, orig.root->asize) != 0)
-    throw std::runtime_error("Failed allocating git buffer");
-
-  if (git_repository_open(&repo, root->ptr) != 0)
-    throw std::runtime_error("Failed opening repository");
+void GitRepository::freeBufResources(git_buf *buf) {
+  git_buf_dispose(buf);
+  delete buf;
 }
-
-GitRepository::GitRepository(GitRepository &&orig) noexcept
-    : root(std::exchange(orig.root, nullptr)),
-      repo(std::exchange(orig.repo, nullptr)) {}
-
-GitRepository &GitRepository::operator=(const GitRepository &rhs) {
-  git_buf *newRoot = new git_buf();
-  if (git_buf_set(newRoot, rhs.root->ptr, rhs.root->asize) != 0) {
-    git_buf_dispose(newRoot);
-    delete newRoot;
-    throw std::runtime_error("Failed allocating git buffer");
-  }
-
-  git_repository *newRepo;
-  if (git_repository_open(&newRepo, newRoot->ptr) != 0) {
-    git_repository_free(newRepo);
-    throw std::runtime_error("Failed opening repository");
-  }
-
-  git_repository_free(repo);
-  git_buf_dispose(root);
-  delete root;
-
-  root = newRoot;
-  repo = newRepo;
-  return *this;
-}
-
-GitRepository &GitRepository::operator=(GitRepository &&orig) noexcept {
-  std::swap(root, orig.root);
-  std::swap(repo, orig.repo);
-  return *this;
-}
-
-GitRepository::~GitRepository() {
-  git_repository_free(repo);
-  git_buf_dispose(root);
-  delete root;
-  git_libgit2_shutdown();
-};
