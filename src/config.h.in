@@ -1,14 +1,33 @@
 #cmakedefine IS_UNIX 1
 
-#define STATUS_SUFFIX ""
 #define STATUS_SEPARATOR " "
+
 #define BRANCH_SYMBOL "⎇ "
-#define STAGED_SYMBOL "+"
-#define CONFLICTS_SYMBOL "⇕"
-#define CHANGED_SYMBOL "!"
-#define BEHIND_SYMBOL "⇣"
-#define AHEAD_SYMBOL "⇡"
+#define BRANCH_COLOR green
+
 #define UNTRACKED_SYMBOL "?"
-#define DELETED_SYMBOL "✘"
+#define UNTRACKED_COLOR red
+
+#define STAGED_SYMBOL "+"
+#define STAGED_COLOR cyan
+
+#define CHANGED_SYMBOL "!"
+#define CHANGED_COLOR yellow
+
 #define RENAMED_SYMBOL "»"
+#define RENAMED_COLOR green
+
+#define DELETED_SYMBOL "✘"
+#define DELETED_COLOR red
+
+#define AHEAD_SYMBOL "⇡"
+#define AHEAD_COLOR cyan
+
+#define BEHIND_SYMBOL "⇣"
+#define BEHIND_COLOR red
+
+#define CONFLICTS_SYMBOL "⇕"
+#define CONFLICTS_COLOR yellow
+
 #define BAD_EXIT_SYMBOL "✘"
+#define BAD_EXIT_COLOR red

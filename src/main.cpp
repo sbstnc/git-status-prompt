@@ -87,47 +87,47 @@ int main(int argc, char *argv[]) {
   auto repoHead = repo.head();
 
   if (repoHead.has_value())
-    std::cout << STATUS_SEPARATOR << rang::fg::green << BRANCH_SYMBOL
+    std::cout << STATUS_SEPARATOR << rang::fg::BRANCH_COLOR << BRANCH_SYMBOL
               << repoHead->shorthand() << rang::fg::reset;
 
   if (repoStatus.untracked() > 0)
-    std::cout << STATUS_SEPARATOR << rang::fg::red << UNTRACKED_SYMBOL
-              << rang::fg::reset;
+    std::cout << STATUS_SEPARATOR << rang::fg::UNTRACKED_COLOR
+              << UNTRACKED_SYMBOL << rang::fg::reset;
 
   if (repoStatus.staged() > 0)
-    std::cout << STATUS_SEPARATOR << rang::fg::cyan << STAGED_SYMBOL
+    std::cout << STATUS_SEPARATOR << rang::fg::STAGED_COLOR << STAGED_SYMBOL
               << rang::fg::reset;
 
   if (repoStatus.changed() > 0)
-    std::cout << STATUS_SEPARATOR << rang::fg::yellow << CHANGED_SYMBOL
+    std::cout << STATUS_SEPARATOR << rang::fg::CHANGED_COLOR << CHANGED_SYMBOL
               << rang::fg::reset;
 
   if (repoStatus.renamed() > 0)
-    std::cout << STATUS_SEPARATOR << rang::fg::green << RENAMED_SYMBOL
+    std::cout << STATUS_SEPARATOR << rang::fg::RENAMED_COLOR << RENAMED_SYMBOL
               << rang::fg::reset;
 
   if (repoStatus.deleted() > 0)
-    std::cout << STATUS_SEPARATOR << rang::fg::red << DELETED_SYMBOL
+    std::cout << STATUS_SEPARATOR << rang::fg::DELETED_COLOR << DELETED_SYMBOL
               << rang::fg::reset;
 
   auto [ahead, behind] = repo.aheadBehind();
   if (ahead > 0)
-    std::cout << STATUS_SEPARATOR << rang::fg::cyan << AHEAD_SYMBOL
+    std::cout << STATUS_SEPARATOR << rang::fg::AHEAD_COLOR << AHEAD_SYMBOL
               << rang::fg::reset;
 
   if (behind > 0)
-    std::cout << STATUS_SEPARATOR << rang::fg::red << BEHIND_SYMBOL
+    std::cout << STATUS_SEPARATOR << rang::fg::BEHIND_COLOR << BEHIND_SYMBOL
               << rang::fg::reset;
 
   if (repoStatus.conflicts() > 0)
-    std::cout << STATUS_SEPARATOR << rang::fg::yellow << CONFLICTS_SYMBOL
-              << rang::fg::reset;
+    std::cout << STATUS_SEPARATOR << rang::fg::CONFLICTS_COLOR
+              << CONFLICTS_SYMBOL << rang::fg::reset;
 
   if (repoHead.has_value())
     std::cout << STATUS_SEPARATOR << repoHead->oid();
 
   if (result["status"].as<int>() != 0)
-    std::cout << STATUS_SEPARATOR << rang::fg::red << BAD_EXIT_SYMBOL
+    std::cout << STATUS_SEPARATOR << rang::fg::BAD_EXIT_COLOR << BAD_EXIT_SYMBOL
               << rang::fg::reset;
 
   std::cout << "\n→ " << std::flush;
