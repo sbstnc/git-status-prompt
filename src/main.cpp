@@ -38,7 +38,6 @@ std::filesystem::path homePath() {
     home = "/";
   }
   return std::filesystem::path(std::move(home));
-  ;
 }
 
 std::filesystem::path currPath() {
