@@ -24,7 +24,6 @@ std::filesystem::path homePath() {
 #ifdef IS_UNIX
   home = std::getenv("HOME");
 #else
-  std::cout << "here" << std::endl;
   if (home.empty()) {
     home = std::getenv("USERPROFILE");
     if (home.empty()) {
@@ -40,6 +39,20 @@ std::filesystem::path homePath() {
   }
   return std::filesystem::path(std::move(home));
   ;
+}
+
+std::filesystem::path currPath() {
+    std::string pwd;
+    pwd = std::getenv("PWD");
+    if (!pwd.empty()) {
+        const std::string powershell_prefix = "Microsoft.PowerShell.Core\\FileSystem::";
+        const auto pos = pwd.find(powershell_prefix);
+        if (pos != std::string::npos) {
+          pwd.erase(pos, powershell_prefix.length());
+        }
+        return std::filesystem::path(pwd);
+    }
+    return std::filesystem::current_path();
 }
 
 int main(int argc, char *argv[]) {
@@ -64,7 +77,7 @@ int main(int argc, char *argv[]) {
     rang::setControlMode(rang::control::Force);
 
   const auto home = homePath();
-  const auto curr = std::filesystem::current_path();
+  const auto curr = currPath();
 
   const auto path_mismatches =
       std::mismatch(curr.begin(), curr.end(), home.begin(), home.end());
@@ -82,7 +95,7 @@ int main(int argc, char *argv[]) {
   }
 
   std::cout << rang::fg::cyan << path_str << rang::fg::reset;
-  auto repo = GitRepository(".");
+  auto repo = GitRepository(curr.string());
   auto repoStatus = repo.status();
   auto repoHead = repo.head();
 
